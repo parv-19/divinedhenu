@@ -1,4 +1,4 @@
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import AdminLayout from './admin/components/AdminLayout.jsx';
 import ProtectedAdminRoute from './admin/components/ProtectedAdminRoute.jsx';
@@ -49,6 +49,7 @@ const titles = {
   '/shipping-policy': 'Shipping Policy | DivineDhenu',
   '/cancellation-and-refund-policy': 'Cancellation and Refund Policy | DivineDhenu',
   '/pricing-policy': 'Pricing Policy | DivineDhenu',
+  '/admin/login': 'Admin Login | DivineDhenu',
 };
 
 export default function App() {
@@ -65,6 +66,7 @@ export default function App() {
       {!isAdminRoute ? <Navbar /> : null}
       <main className={!isAdminRoute ? 'pb-16 lg:pb-0' : ''}>
         <Routes>
+          <Route path="/login" element={<Navigate to="/admin/login" replace />} />
           <Route path="/admin/login" element={<Login />} />
           <Route element={<ProtectedAdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
