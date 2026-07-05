@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getFallbackBlogBySlug, getFallbackBlogs } from '../data/blogContent.js';
 import { categories as fallbackCategories, products as fallbackProducts } from '../data/products.js';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
@@ -34,6 +35,7 @@ export const normalizeBlog = (blog) => ({
 export const fallback = {
   products: fallbackProducts.map(normalizeProduct),
   categories: fallbackCategories,
+  blogs: getFallbackBlogs({ limit: 100 }).map(normalizeBlog),
 };
 
 export const publicApi = {
@@ -78,14 +80,21 @@ export const publicApi = {
   },
   async getBlogs(params = {}) {
     const { data } = await api.get('/blogs', { params });
+    const blogs = (data.blogs || []).map(normalizeBlog);
     return {
-      blogs: (data.blogs || []).map(normalizeBlog),
+      blogs: blogs.length ? blogs : getFallbackBlogs(params).map(normalizeBlog),
       pagination: data.pagination,
     };
   },
   async getBlog(slug) {
-    const { data } = await api.get(`/blogs/${slug}`);
-    return normalizeBlog(data.blog);
+    try {
+      const { data } = await api.get(`/blogs/${slug}`);
+      return normalizeBlog(data.blog);
+    } catch (error) {
+      const fallbackBlog = getFallbackBlogBySlug(slug);
+      if (fallbackBlog) return normalizeBlog(fallbackBlog);
+      throw error;
+    }
   },
   async createOrder(payload) {
     const { data } = await api.post('/orders', payload);

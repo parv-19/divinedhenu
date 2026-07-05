@@ -2,7 +2,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import { cowpediaTopics, getCowpediaTopic } from '../data/cowpediaTopics.js';
-import { publicApi } from '../services/api.js';
+import { fallback, publicApi } from '../services/api.js';
 
 const formatDate = (value) => new Intl.DateTimeFormat('en-IN', {
   month: 'long',
@@ -21,7 +21,7 @@ export default function CowPediaTopic() {
     setLoading(true);
     publicApi.getBlogs({ section: 'cowpedia', topic: topic.slug, limit: 100 })
       .then((data) => setPosts(data.blogs || []))
-      .catch(() => setPosts([]))
+      .catch(() => setPosts(fallback.blogs.filter((post) => post.section === 'cowpedia' && post.topic === topic.slug)))
       .finally(() => setLoading(false));
   }, [topic]);
 
@@ -59,7 +59,7 @@ export default function CowPediaTopic() {
           {!loading && posts.map((post) => (
             <article key={post.id} className="grid border border-[#dedede] bg-white md:grid-cols-[300px_1fr]">
               <Link to={`/cowpedia/${topic.slug}/${post.slug}`} className="block bg-[#f3f3f3]">
-                <img src={post.heroImageUrl} alt={post.heroImage?.alt || post.title} className="aspect-[1.54] h-full w-full object-cover" />
+                <img src={post.heroImageUrl} alt={post.heroImage?.alt || post.title} className="aspect-[1.54] h-full w-full object-cover" loading="lazy" />
               </Link>
               <div className="flex flex-col justify-center p-5">
                 <time className="text-sm font-medium uppercase tracking-[0.04em]">{formatDate(post.publishedAt || post.createdAt)}</time>

@@ -37,8 +37,8 @@ export default function CowPedia() {
             const latestPost = postsByTopic[topic.slug]?.[0];
             return (
               <Link key={topic.slug} to={`/cowpedia/${topic.slug}`} className="group overflow-hidden rounded-lg border border-[#dcdcdc] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
-                {latestPost?.heroImageUrl ? (
-                  <img src={latestPost.heroImageUrl} alt={topic.title} className="aspect-[1.56] w-full object-cover" />
+                {latestPost?.heroImageUrl || topic.image ? (
+                  <img src={latestPost?.heroImageUrl || topic.image} alt={topic.title} className="aspect-[1.56] w-full object-cover" loading="lazy" />
                 ) : (
                   <div className="grid aspect-[1.56] place-items-center bg-[#f4efe7] px-6 text-center text-xl font-bold text-[#4a2f1d]">{topic.title}</div>
                 )}

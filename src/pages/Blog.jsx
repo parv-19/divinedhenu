@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Container from '../components/common/Container.jsx';
-import { publicApi } from '../services/api.js';
+import { fallback, publicApi } from '../services/api.js';
 
 const formatDate = (value) => new Intl.DateTimeFormat('en-IN', {
   month: 'long',
@@ -17,7 +17,10 @@ export default function Blog() {
   useEffect(() => {
     publicApi.getBlogs({ section: 'blog', limit: 24 })
       .then((data) => setBlogs(data.blogs || []))
-      .catch(() => setError('Blog posts are unavailable right now.'))
+      .catch(() => {
+        setBlogs(fallback.blogs.filter((blog) => blog.section === 'blog'));
+        setError('Live CMS posts are unavailable right now, showing starter blog content.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,7 +48,7 @@ export default function Blog() {
             {blogs.map((blog) => (
               <article key={blog.id} className="group">
                 <Link to={`/blog/${blog.slug}`} className="block overflow-hidden bg-[#f2f2f2]">
-                  <img src={blog.heroImageUrl} alt={blog.heroImage?.alt || blog.title} className="aspect-[1.54] w-full object-cover transition duration-300 group-hover:scale-[1.02]" />
+                  <img src={blog.heroImageUrl} alt={blog.heroImage?.alt || blog.title} className="aspect-[1.54] w-full object-cover transition duration-300 group-hover:scale-[1.02]" loading="lazy" />
                 </Link>
                 <time className="mt-9 block text-sm font-bold uppercase tracking-[0.08em] text-black">
                   {formatDate(blog.publishedAt || blog.createdAt)}
