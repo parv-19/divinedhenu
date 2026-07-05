@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import AdminLayout from './admin/components/AdminLayout.jsx';
 import ProtectedAdminRoute from './admin/components/ProtectedAdminRoute.jsx';
@@ -54,7 +54,18 @@ const titles = {
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  useEffect(() => {
+    const redirectPath = window.sessionStorage.getItem('divinedhenu:spa-redirect');
+    if (!redirectPath) return;
+
+    window.sessionStorage.removeItem('divinedhenu:spa-redirect');
+    if (redirectPath !== location.pathname) {
+      navigate(redirectPath, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   useEffect(() => {
     document.title = titles[location.pathname] || 'DivineDhenu | Product Details';
