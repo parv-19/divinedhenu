@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import adminApi, { getErrorMessage } from '../services/adminApi.js';
@@ -7,6 +8,7 @@ export default function Login() {
   const location = useLocation();
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -66,13 +68,24 @@ export default function Login() {
           </label>
           <label className="block">
             <span className="text-sm font-medium text-ritual-text">Password</span>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(event) => setForm({ ...form, password: event.target.value })}
-              className="focus-ring mt-1 w-full rounded-md border border-ritual-border bg-ritual-background px-3 py-2 text-sm"
-            />
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={form.password}
+                onChange={(event) => setForm({ ...form, password: event.target.value })}
+                className="focus-ring w-full rounded-md border border-ritual-border bg-ritual-background px-3 py-2 pr-11 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="focus-ring absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-ritual-muted hover:text-ritual-text"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </label>
         </div>
         {error ? <p className="mt-4 rounded-md bg-ritual-rose/20 px-3 py-2 text-sm text-ritual-text">{error}</p> : null}

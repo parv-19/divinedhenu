@@ -8,14 +8,47 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
+const addDomainVariants = (origin) => {
+  if (!origin) return [];
+
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    const baseHost = host.startsWith('www.') ? host.slice(4) : host;
+
+    return [
+      origin,
+      `${url.protocol}//${baseHost}`,
+      `${url.protocol}//www.${baseHost}`,
+    ];
+  } catch {
+    return [origin];
+  }
+};
+
+const allowedOrigins = new Set([
+  ...addDomainVariants(process.env.FRONTEND_URL),
+  'https://divinedhenu.com',
+  'https://www.divinedhenu.com',
+  'https://divinedhenu.vercel.app',
   'http://localhost:5173',
-].filter(Boolean);
+].filter(Boolean));
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+
+  try {
+    const { hostname } = new URL(origin);
+    return hostname.endsWith('.vercel.app');
+  } catch {
+    return false;
+  }
+};
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
