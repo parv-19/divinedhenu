@@ -99,10 +99,27 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    discount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     total: {
       type: Number,
       required: true,
       min: 0,
+    },
+    couponCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    couponDiscountPercent: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
     },
     paymentMethod: {
       type: String,

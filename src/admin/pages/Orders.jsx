@@ -46,6 +46,8 @@ export default function Orders() {
   const columns = [
     { key: 'orderNumber', label: 'Order' },
     { key: 'customer', label: 'Customer', render: (row) => `${row.customer?.name || '-'} | ${row.customer?.phone || '-'}` },
+    { key: 'couponCode', label: 'Coupon', render: (row) => row.couponCode || '-' },
+    { key: 'discount', label: 'Discount', render: (row) => row.discount ? `Rs. ${Number(row.discount).toFixed(2)}` : '-' },
     { key: 'total', label: 'Total', render: (row) => `Rs. ${Number(row.total || 0).toFixed(2)}` },
     { key: 'paymentStatus', label: 'Payment Status' },
     { key: 'razorpayPaymentId', label: 'Razorpay Payment ID', render: (row) => row.razorpayPaymentId || '-' },

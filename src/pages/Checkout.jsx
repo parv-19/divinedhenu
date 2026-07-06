@@ -36,11 +36,15 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [couponCode, setCouponCode] = useState('');
   const [shippingQuote, setShippingQuote] = useState(null);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [shippingError, setShippingError] = useState('');
   const shipping = shippingQuote?.shipping || 0;
+  const discount = shippingQuote?.discount || 0;
 
   useEffect(() => {
     const cleanPostalCode = postalCode.trim();
@@ -57,6 +61,9 @@ export default function Checkout() {
       setShippingLoading(true);
       publicApi.quoteShipping({
         postalCode: cleanPostalCode,
+        email,
+        phone,
+        couponCode,
         paymentMethod,
         items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
       })
@@ -71,7 +78,7 @@ export default function Checkout() {
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [items, paymentMethod, postalCode]);
+  }, [couponCode, email, items, paymentMethod, phone, postalCode]);
 
   const placeOrder = async (event) => {
     event.preventDefault();
@@ -93,6 +100,7 @@ export default function Checkout() {
         customer,
         items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
         paymentMethod,
+        couponCode,
       });
 
       if (paymentMethod !== 'razorpay') {
@@ -189,8 +197,8 @@ export default function Checkout() {
             <h2 className="font-serif text-2xl">Delivery Details</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Field label="Full name" name="name" autoComplete="name" />
-              <Field label="Mobile number" name="phone" type="tel" autoComplete="tel" />
-              <Field label="Email" name="email" type="email" autoComplete="email" />
+              <Field label="Mobile number" name="phone" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} />
+              <Field label="Email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
               <Field label="PIN code" name="postalCode" inputMode="numeric" autoComplete="postal-code" maxLength={6} value={postalCode} onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, '').slice(0, 6))} />
               <Field label="Address" name="address" autoComplete="street-address" className="sm:col-span-2" />
               <Field label="City" name="city" autoComplete="address-level2" />
@@ -218,7 +226,17 @@ export default function Checkout() {
               ))}
             </div>
             <div className="mt-6 space-y-3 border-t border-ritual-border pt-4 text-sm">
+              <label className="block">
+                <span className="text-sm font-medium">Coupon code</span>
+                <input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase().replace(/\s/g, ''))} placeholder="DIVINE20" className={inputClass} />
+              </label>
               <div className="flex justify-between"><span>Subtotal</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
+              {discount ? (
+                <div className="flex justify-between text-green-700">
+                  <span>Coupon {shippingQuote?.couponCode ? `(${shippingQuote.couponCode})` : ''}</span>
+                  <span>- Rs. {Number(discount).toFixed(2)}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <span>{shippingLabel(shippingQuote, shippingLoading, postalCode)}</span>
@@ -226,7 +244,7 @@ export default function Checkout() {
               {shippingQuote?.courierName ? <p className="text-xs text-ritual-muted">{shippingQuote.courierName}{shippingQuote.estimatedDeliveryDays ? ` | ${shippingQuote.estimatedDeliveryDays}` : ''}</p> : null}
               {shippingError ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{shippingError}</p> : null}
               <div className="flex justify-between border-t border-ritual-border pt-3 text-lg font-semibold">
-                <span>Total</span><span>Rs. {Number(cartTotal + shipping).toFixed(2)}</span>
+                <span>Total</span><span>Rs. {Number(cartTotal - discount + shipping).toFixed(2)}</span>
               </div>
             </div>
             {error ? <p className="mt-5 rounded-md bg-red-50 px-3 py-3 text-sm text-red-700">{error}</p> : null}

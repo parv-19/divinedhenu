@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Offer from '../models/Offer.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { createRazorpayOrder, getPublicRazorpayKey, verifyPaymentSignature } from './razorpayService.js';
@@ -20,6 +21,8 @@ const normalizeQuantity = (value) => {
 };
 
 const normalizePaymentMethod = (value) => (value === 'razorpay' ? 'razorpay' : 'cod');
+
+const normalizeCouponCode = (value) => String(value || '').trim().toUpperCase();
 
 const validateCustomer = (customer = {}) => {
   const requiredFields = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode'];
@@ -63,6 +66,56 @@ const mapOrderItems = (productIds, quantityByProduct, productMap) => productIds.
   };
 });
 
+const getActiveCoupon = async (couponCode) => {
+  const normalizedCode = normalizeCouponCode(couponCode);
+  if (!normalizedCode) return null;
+
+  const now = new Date();
+  const coupon = await Offer.findOne({
+    type: 'coupon',
+    couponCode: normalizedCode,
+    isActive: true,
+    $and: [
+      { $or: [{ startDate: null }, { startDate: { $lte: now } }] },
+      { $or: [{ endDate: null }, { endDate: { $gte: now } }] },
+    ],
+  });
+
+  if (!coupon) throw createError('Coupon is invalid or expired');
+  if (!coupon.discountPercent) throw createError('Coupon does not have a discount configured');
+  return coupon;
+};
+
+const validateCouponRules = async ({ coupon, items, customer = {} }) => {
+  if (!coupon) return;
+
+  const code = normalizeCouponCode(coupon.couponCode);
+  const text = String(coupon.text || '').toLowerCase();
+  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  if ((code === 'DIVINE20' || text.includes('buy 3')) && totalUnits < 3) {
+    throw createError('DIVINE20 is applicable when you buy at least 3 products');
+  }
+
+  if (code === 'FIRST10' || text.includes('first order')) {
+    const email = String(customer.email || '').trim().toLowerCase();
+    const phone = String(customer.phone || '').replace(/\D/g, '');
+
+    if (!email && !phone) {
+      throw createError('Enter email or phone number to apply first order coupon');
+    }
+
+    const previousOrder = await Order.exists({
+      $or: [
+        ...(email ? [{ 'customer.email': email }] : []),
+        ...(phone ? [{ 'customer.phone': phone }] : []),
+      ],
+    });
+
+    if (previousOrder) throw createError('FIRST10 is only valid on your first order');
+  }
+};
+
 const buildOrderPricing = async (body) => {
   const requestedItems = Array.isArray(body.items) ? body.items : [];
   if (!requestedItems.length) throw createError('Order must include at least one product');
@@ -84,40 +137,53 @@ const buildOrderPricing = async (body) => {
   const items = mapOrderItems(productIds, quantityByProduct, productMap);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const paymentMethod = normalizePaymentMethod(body.paymentMethod || body.payment);
+  const coupon = await getActiveCoupon(body.couponCode);
+  await validateCouponRules({ coupon, items, customer: body.customer });
+  const discountPercent = coupon?.discountPercent || 0;
+  const discount = Number(((subtotal * discountPercent) / 100).toFixed(2));
   const orderPackage = getOrderPackage({ items });
   const shippingRate = await getShiprocketShippingRate({
     deliveryPostcode: body.customer?.postalCode || body.postalCode,
     weight: orderPackage.weight,
     cod: paymentMethod === 'cod',
-    declaredValue: subtotal,
+    declaredValue: subtotal - discount,
   });
   const shipping = shippingRate.rate;
 
   return {
     items,
     subtotal,
+    discount,
     shipping,
-    total: subtotal + shipping,
+    total: Math.max(Number((subtotal - discount + shipping).toFixed(2)), 0),
     paymentMethod,
     package: orderPackage,
     shippingRate,
+    coupon,
   };
 };
 
-export const quoteShipping = async (body) => {
+export const quoteCheckout = async (body) => {
   if (!/^\d{6}$/.test(String(body.postalCode || '').trim())) {
     throw createError('Enter a valid 6 digit PIN code');
   }
 
   const pricing = await buildOrderPricing({
     ...body,
-    customer: { postalCode: body.postalCode },
+    customer: {
+      postalCode: body.postalCode,
+      email: body.email,
+      phone: body.phone,
+    },
   });
 
   return {
     subtotal: pricing.subtotal,
+    discount: pricing.discount,
     shipping: pricing.shipping,
     total: pricing.total,
+    couponCode: pricing.coupon?.couponCode || '',
+    couponDiscountPercent: pricing.coupon?.discountPercent || 0,
     courierCompanyId: pricing.shippingRate.courierCompanyId,
     courierName: pricing.shippingRate.courierName,
     estimatedDeliveryDays: pricing.shippingRate.estimatedDeliveryDays,
@@ -133,8 +199,11 @@ export const createOrder = async (body) => {
     customer: body.customer,
     items: pricing.items,
     subtotal: pricing.subtotal,
+    discount: pricing.discount,
     shipping: pricing.shipping,
     total: pricing.total,
+    couponCode: pricing.coupon?.couponCode || '',
+    couponDiscountPercent: pricing.coupon?.discountPercent || 0,
     paymentMethod: pricing.paymentMethod,
     paymentStatus: 'pending',
     orderStatus: pricing.paymentMethod === 'razorpay' ? 'payment_initiated' : 'pending',
