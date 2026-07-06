@@ -36,23 +36,6 @@ import CowPediaTopic from './pages/CowPediaTopic.jsx';
 import LegalPage from './pages/LegalPage.jsx';
 import NotFound from './pages/NotFound.jsx';
 
-const titles = {
-  '/': 'DivineDhenu | Scents That Turn Spaces Into Rituals',
-  '/shop': 'Shop Ritual Fragrance | DivineDhenu',
-  '/cart': 'Your Ritual Cart | DivineDhenu',
-  '/checkout': 'Checkout | DivineDhenu',
-  '/about': 'About DivineDhenu',
-  '/blog': 'Blog | DivineDhenu',
-  '/cowpedia': 'CowPedia | DivineDhenu',
-  '/contact': 'Contact DivineDhenu',
-  '/terms-and-conditions': 'Terms and Conditions | DivineDhenu',
-  '/privacy-policy': 'Privacy Policy | DivineDhenu',
-  '/shipping-policy': 'Shipping Policy | DivineDhenu',
-  '/cancellation-and-refund-policy': 'Cancellation and Refund Policy | DivineDhenu',
-  '/pricing-policy': 'Pricing Policy | DivineDhenu',
-  '/admin/login': 'Admin Login | DivineDhenu',
-};
-
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -69,7 +52,6 @@ export default function App() {
   }, [location.pathname, navigate]);
 
   useEffect(() => {
-    document.title = titles[location.pathname] || 'DivineDhenu | Product Details';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
@@ -107,6 +89,7 @@ export default function App() {
           </Route>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/collections/agarbatti" element={<Shop />} />
           <Route path="/products/:slug" element={<ProductDetails />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogDetails />} />

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import SectionHeading from '../components/common/SectionHeading.jsx';
 import { PrimaryButton } from '../components/common/Button.jsx';
+import SEO, { localBusinessJsonLd } from '../components/common/SEO.jsx';
 import { publicApi } from '../services/api.js';
 
 const fallbackAboutImage = '/divinedhenu-logo-mark.png';
@@ -52,6 +53,13 @@ export default function About() {
 
   return (
     <>
+      <SEO
+        title="About DivineDhenu | Ritual Fragrance Brand from Ahmedabad, Gujarat"
+        description="Learn about DivineDhenu, an Ahmedabad-based ritual fragrance brand creating dhoop, incense, havan cups and meaningful gifting products for homes across Gujarat."
+        path="/about"
+        keywords="about DivineDhenu, Ahmedabad fragrance brand, Gujarat dhoop brand, ritual fragrance India, puja products Ahmedabad"
+        jsonLd={localBusinessJsonLd}
+      />
       <section className="py-16 md:py-20">
         <Container className="grid items-center gap-10 lg:grid-cols-2">
           <div>
@@ -84,6 +92,33 @@ export default function About() {
           </Container>
         </section>
       ) : null}
+
+      <section className="py-16">
+        <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-ritual-gold">Purity, Tradition & Spirituality</span>
+            <h2 className="mt-4 font-serif text-4xl leading-tight">Pure Puja Materials Rooted in Gir Cow Tradition</h2>
+            <p className="mt-5 text-sm leading-7 text-ritual-muted">
+              DivineDhenu is a bridge between ancient Indian culture and the modern lifestyle. Operated by N.K. Enterprise, we create 100% pure, chemical-free puja materials using sacred Gir cow dung, Panchagavya wisdom, natural herbs and essential oils.
+            </p>
+            <p className="mt-4 text-sm leading-7 text-ritual-muted">
+              From Ahmedabad and Gandhinagar to Bhavnagar, Junagadh, Amreli, Botad, Gadhada, Salangpur and homes across Gujarat, our mission is to bring a temple-like sacred environment into every home.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              'Pure Gir cow dung as the foundation of traditional dhoop products',
+              'Bamboo-less agarbatti and incense sticks for mindful puja use',
+              'Free from charcoal, harsh chemicals and synthetic shortcuts',
+              'Natural fragrance from herbs and essential oils for peace and focus',
+            ].map((item) => (
+              <div key={item} className="rounded-lg border border-ritual-border bg-ritual-card p-5 text-sm leading-6 shadow-soft">
+                {item}
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
 
       {content.aboutProcessTitle || content.aboutProcessDescription || processSteps.length ? (
         <section className="py-16">

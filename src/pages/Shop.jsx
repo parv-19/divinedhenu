@@ -1,8 +1,9 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import Container from '../components/common/Container.jsx';
 import ProductCard from '../components/common/ProductCard.jsx';
+import SEO from '../components/common/SEO.jsx';
 import { fallback, publicApi } from '../services/api.js';
 
 const sortOptions = [
@@ -12,8 +13,10 @@ const sortOptions = [
 ];
 
 export default function Shop() {
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const [category, setCategory] = useState(params.get('category') || 'All');
+  const [searchTerm, setSearchTerm] = useState(params.get('search') || '');
   const [sort, setSort] = useState('newest');
   const [openDropdown, setOpenDropdown] = useState('');
   const [products, setProducts] = useState([]);
@@ -23,6 +26,7 @@ export default function Shop() {
 
   useEffect(() => {
     setCategory(params.get('category') || 'All');
+    setSearchTerm(params.get('search') || '');
   }, [params]);
 
   useEffect(() => {
@@ -46,11 +50,13 @@ export default function Shop() {
       .finally(() => setLoading(false));
   }, [sort]);
 
-  const filteredProducts = useMemo(() => (
-    applyFilters(products, { category, sort })
-  ), [products, category, sort]);
+  const isAgarbattiCollection = location.pathname === '/collections/agarbatti';
 
-  const pageTitle = category === 'All' ? 'Shop' : category;
+  const filteredProducts = useMemo(() => (
+    applyFilters(products, { category, searchTerm, sort, isAgarbattiCollection })
+  ), [products, category, isAgarbattiCollection, searchTerm, sort]);
+
+  const pageTitle = isAgarbattiCollection ? 'Agarbatti & Incense Sticks' : category === 'All' ? 'Shop' : category;
 
   const updateCategory = (nextCategory) => {
     setCategory(nextCategory);
@@ -62,10 +68,23 @@ export default function Shop() {
 
   return (
     <section className="bg-white py-7 text-[#121212] md:py-14">
+      <SEO
+        title={isAgarbattiCollection ? 'Shop Bamboo-less Agarbatti and Incense Sticks Online | DivineDhenu' : `${pageTitle === 'Shop' ? 'Shop Dhoop, Incense and Puja Products' : `Shop ${pageTitle}`} | DivineDhenu Gujarat`}
+        description={isAgarbattiCollection ? 'Shop DivineDhenu bamboo-less agarbatti, chemical-free incense sticks, Gir cow dung dhoop and natural fragrance products online in Ahmedabad, Gandhinagar and Gujarat.' : 'Explore DivineDhenu dhoop cups, bamboo-less agarbatti, incense, havan cups, camphor, organic puja products and gifting combos with delivery in Ahmedabad, Gandhinagar and across Gujarat.'}
+        path={isAgarbattiCollection ? '/collections/agarbatti' : '/shop'}
+        keywords="shop agarbatti online, bamboo-less agarbatti, chemical-free incense, incense sticks Gujarat, dhoop cups Ahmedabad, puja products Gandhinagar, Gir cow dung dhoop, havan cups online, DivineDhenu shop"
+      />
       <Container>
         <div className="mb-6 md:mb-10">
           <h1 className="text-3xl font-medium tracking-wide md:text-5xl">{pageTitle}</h1>
-          <p className="mt-3 text-sm tracking-wide text-[#777] md:mt-8 md:text-base">{filteredProducts.length} products</p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 tracking-wide text-[#777] md:mt-8 md:text-base">
+            {isAgarbattiCollection
+              ? 'Pure, chemical-free and bamboo-less agarbatti, incense and dhoop products made with natural herbs, essential oils and Gir cow dung tradition for homes across Ahmedabad, Gandhinagar and Gujarat.'
+              : searchTerm
+                ? `${filteredProducts.length} products matching "${searchTerm}"`
+              : `${filteredProducts.length} products`}
+          </p>
+          {isAgarbattiCollection ? <p className="mt-2 text-sm tracking-wide text-[#777]">{filteredProducts.length} products</p> : null}
         </div>
 
         <div className="relative z-30 mb-7 flex flex-col gap-4 text-sm tracking-wide text-[#4a4a4a] md:mb-12 lg:flex-row lg:items-start lg:justify-between">
@@ -160,8 +179,23 @@ function DropdownFilter({ id, label, value, options, openDropdown, setOpenDropdo
   );
 }
 
-function applyFilters(source, { category, sort }) {
+function applyFilters(source, { category, searchTerm, sort, isAgarbattiCollection }) {
   let result = [...source];
+
+  if (searchTerm) {
+    const normalizedSearch = searchTerm.toLowerCase();
+    result = result.filter((item) => {
+      const haystack = [item.name, item.category, item.shortDescription, item.description, ...(item.moodTags || [])].join(' ').toLowerCase();
+      return haystack.includes(normalizedSearch);
+    });
+  }
+
+  if (isAgarbattiCollection) {
+    result = result.filter((item) => {
+      const haystack = [item.name, item.category, item.shortDescription, item.description].join(' ').toLowerCase();
+      return ['agarbatti', 'incense', 'dhoop'].some((term) => haystack.includes(term));
+    });
+  }
 
   if (category !== 'All') {
     result = result.filter((item) => item.category === category || item.category?.name === category);

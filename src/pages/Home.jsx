@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import ProductCard from '../components/common/ProductCard.jsx';
+import SEO, { localBusinessJsonLd, siteSearchJsonLd } from '../components/common/SEO.jsx';
 import { publicApi } from '../services/api.js';
 
 const cdn = (path) => `https://www.jpgrouponline.com/cdn/shop/files/${path}`;
@@ -123,6 +124,13 @@ export default function Home() {
 
   return (
     <div className="bg-white text-[#121212]">
+      <SEO
+        title="DivineDhenu Ahmedabad | Dhoop, Incense, Havan Cups and Puja Fragrance"
+        description="Buy premium dhoop cups, incense sticks, havan cups, camphor and ritual fragrance gifts online from DivineDhenu in Ahmedabad, Gandhinagar and across Gujarat."
+        path="/"
+        keywords="dhoop in Ahmedabad, incense sticks Ahmedabad, puja fragrance Gujarat, havan cups Gandhinagar, DivineDhenu, dhoop cups online Gujarat"
+        jsonLd={[localBusinessJsonLd, siteSearchJsonLd]}
+      />
       {slide ? (
         <section className="relative min-h-[290px] overflow-hidden md:min-h-[520px]">
           {carouselSlides.map((item, index) => (

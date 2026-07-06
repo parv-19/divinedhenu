@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import ProductImage from '../components/products/ProductImage.jsx';
+import SEO, { seoDefaults } from '../components/common/SEO.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { publicApi } from '../services/api.js';
 
@@ -19,10 +20,6 @@ export default function BlogDetails() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  useEffect(() => {
-    if (blog?.title) document.title = `${blog.metaTitle || blog.title} | DivineDhenu`;
-  }, [blog]);
-
   const productBlocks = useMemo(() => (
     (blog?.contentBlocks || []).filter((block) => block.type === 'products').length
   ), [blog]);
@@ -37,6 +34,29 @@ export default function BlogDetails() {
 
   return (
     <article className="bg-white pb-20 pt-12 text-[#121212] md:pt-20">
+      <SEO
+        title={blog.metaTitle || `${blog.title} | DivineDhenu`}
+        description={blog.metaDescription || blog.excerpt}
+        path={blog.section === 'cowpedia' ? `/cowpedia/${blog.topic}/${blog.slug}` : `/blog/${blog.slug}`}
+        image={blog.heroImageUrl || seoDefaults.defaultImage}
+        type="article"
+        keywords={`${blog.title}, DivineDhenu, puja fragrance Gujarat, dhoop Ahmedabad, Indian cow wisdom`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: blog.title,
+          description: blog.metaDescription || blog.excerpt,
+          image: blog.heroImageUrl || seoDefaults.defaultImage,
+          datePublished: blog.publishedAt || blog.createdAt,
+          dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
+          author: { '@type': 'Organization', name: 'DivineDhenu' },
+          publisher: {
+            '@type': 'Organization',
+            name: 'DivineDhenu',
+            logo: { '@type': 'ImageObject', url: seoDefaults.defaultImage },
+          },
+        }}
+      />
       <div className="mx-auto max-w-[980px] px-4">
         <h1 className="mx-auto max-w-[900px] text-center text-4xl font-normal leading-[1.45] tracking-normal md:text-[38px]">
           {blog.title}

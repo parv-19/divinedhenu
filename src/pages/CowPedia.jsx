@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import ProductImage from '../components/products/ProductImage.jsx';
+import SEO from '../components/common/SEO.jsx';
 import { cowpediaTopics } from '../data/cowpediaTopics.js';
 import { publicApi } from '../services/api.js';
 
@@ -24,6 +25,12 @@ export default function CowPedia() {
 
   return (
     <section className="bg-white py-14 text-black md:py-20">
+      <SEO
+        title="CowPedia by DivineDhenu | Indian Cow Knowledge in Gujarat"
+        description="Explore CowPedia by DivineDhenu for Indian cow knowledge, A2 milk education, cow care, culture, traditions and transparent dairy learning."
+        path="/cowpedia"
+        keywords="CowPedia Gujarat, Indian cow knowledge, A2 milk Gujarat, cow care Ahmedabad, Indian cow tradition, DivineDhenu CowPedia"
+      />
       <Container>
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-extrabold tracking-normal md:text-5xl">CowPedia</h1>

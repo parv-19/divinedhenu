@@ -6,6 +6,7 @@ import { PrimaryButton, SecondaryButton } from '../components/common/Button.jsx'
 import Container from '../components/common/Container.jsx';
 import ProductCard from '../components/common/ProductCard.jsx';
 import ProductImage from '../components/products/ProductImage.jsx';
+import SEO, { seoDefaults } from '../components/common/SEO.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { fallback, publicApi } from '../services/api.js';
 
@@ -72,6 +73,30 @@ export default function ProductDetails() {
 
   return (
     <section className="py-12 md:py-16">
+      <SEO
+        title={product.metaTitle || `${product.name} | Buy Online in Ahmedabad and Gujarat | DivineDhenu`}
+        description={product.metaDescription || `Buy ${product.name} from DivineDhenu. Premium ritual fragrance, dhoop and puja products with delivery in Ahmedabad, Gandhinagar and across Gujarat.`}
+        path={`/products/${product.slug}`}
+        image={product.images?.[0]?.url || product.image || seoDefaults.defaultImage}
+        type="product"
+        keywords={`${product.name}, ${product.category}, dhoop Ahmedabad, incense Gujarat, puja products online, DivineDhenu`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          image: (product.images || []).map((image) => image?.url || image).filter(Boolean),
+          description: product.metaDescription || product.description,
+          sku: product.sku || product.id || product._id,
+          brand: { '@type': 'Brand', name: 'DivineDhenu' },
+          offers: {
+            '@type': 'Offer',
+            url: `${seoDefaults.siteUrl}/products/${product.slug}`,
+            priceCurrency: 'INR',
+            price: Number(product.price || 0).toFixed(2),
+            availability: soldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          },
+        }}
+      />
       <Container>
         {error ? <p className="mb-6 rounded-lg bg-ritual-card px-4 py-3 text-sm text-ritual-muted">{error}</p> : null}
         <div className="grid gap-10 lg:grid-cols-2">

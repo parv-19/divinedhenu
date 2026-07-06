@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import SectionHeading from '../components/common/SectionHeading.jsx';
 import { PrimaryButton } from '../components/common/Button.jsx';
+import SEO, { localBusinessJsonLd } from '../components/common/SEO.jsx';
 
 const faqs = [
   ['How long does delivery take?', 'Most orders arrive within 3-7 business days after dispatch, depending on the delivery pin code.'],
@@ -33,6 +34,27 @@ export default function Contact() {
 
   return (
     <section className="py-12 md:py-16">
+      <SEO
+        title="Contact DivineDhenu Ahmedabad | Puja Fragrance and Bulk Gifting"
+        description="Contact DivineDhenu in Ahmedabad, Gujarat for dhoop, incense, havan cups, ritual fragrance, gifting and bulk order support."
+        path="/contact"
+        keywords="contact DivineDhenu, dhoop Ahmedabad contact, incense Gujarat support, puja gifting Ahmedabad, bulk gifting Gujarat, bamboo-less agarbatti support"
+        jsonLd={[
+          localBusinessJsonLd,
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqs.map(([question, answer]) => ({
+              '@type': 'Question',
+              name: question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: answer,
+              },
+            })),
+          },
+        ]}
+      />
       <Container>
         <SectionHeading title="Contact DivineDhenu" subtitle="Questions about daily puja, gifting, or finding your right fragrance? We would love to help." />
         <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">

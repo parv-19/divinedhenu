@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Container from '../components/common/Container.jsx';
 import ProductImage from '../components/products/ProductImage.jsx';
+import SEO from '../components/common/SEO.jsx';
 import { fallback, publicApi } from '../services/api.js';
 
 const formatDate = (value) => new Intl.DateTimeFormat('en-IN', {
@@ -27,6 +28,13 @@ export default function Blog() {
 
   return (
     <section className="bg-white py-14 text-[#050505] md:py-20">
+      <SEO
+        title="DivineDhenu Blog | Puja, Dhoop, Incense and Cow Wisdom"
+        description="Read DivineDhenu guides on puja fragrance, dhoop, incense, havan cups, Indian cow wisdom, rituals and mindful home fragrance for Gujarat families."
+        path="/blog"
+        keywords="dhoop blog Gujarat, puja fragrance guide, incense guide Ahmedabad, Indian cow tradition blog, DivineDhenu blog"
+        type="blog"
+      />
       <Container>
         <h1 className="text-center text-5xl font-semibold tracking-normal md:text-6xl">Blog</h1>
 
