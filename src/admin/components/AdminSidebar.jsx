@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   MessageSquareQuote,
   Package,
+  ReceiptText,
   Settings,
   Tags,
 } from 'lucide-react';
@@ -15,6 +16,7 @@ const links = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/categories', label: 'Categories', icon: Tags },
   { to: '/admin/products', label: 'Products', icon: Package },
+  { to: '/admin/orders', label: 'Orders', icon: ReceiptText },
   { to: '/admin/blogs', label: 'Blogs', icon: FileText },
   { to: '/admin/combos', label: 'Combos', icon: Layers },
   { to: '/admin/banners', label: 'Banners', icon: Image },

@@ -98,6 +98,10 @@ export const publicApi = {
   },
   async createOrder(payload) {
     const { data } = await api.post('/orders', payload);
+    return data;
+  },
+  async verifyPayment(payload) {
+    const { data } = await api.post('/payments/verify', payload);
     return data.order;
   },
 };

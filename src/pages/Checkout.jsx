@@ -7,6 +7,28 @@ import { useCart } from '../context/CartContext.jsx';
 import { publicApi } from '../services/api.js';
 
 const inputClass = 'mt-1 w-full rounded-md border border-ritual-border bg-white px-3 py-3 text-sm outline-none transition focus:border-ritual-gold';
+const razorpayScriptUrl = 'https://checkout.razorpay.com/v1/checkout.js';
+
+const loadRazorpayScript = () => new Promise((resolve, reject) => {
+  if (window.Razorpay) {
+    resolve(true);
+    return;
+  }
+
+  const existingScript = document.querySelector(`script[src="${razorpayScriptUrl}"]`);
+  if (existingScript) {
+    existingScript.addEventListener('load', () => resolve(true), { once: true });
+    existingScript.addEventListener('error', reject, { once: true });
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = razorpayScriptUrl;
+  script.async = true;
+  script.onload = () => resolve(true);
+  script.onerror = reject;
+  document.body.appendChild(script);
+});
 
 export default function Checkout() {
   const { items, cartTotal, clearCart } = useCart();
@@ -21,16 +43,75 @@ export default function Checkout() {
     setError('');
 
     const formData = new FormData(event.currentTarget);
+    const paymentMethod = formData.get('payment');
+    const customer = Object.fromEntries(formData.entries());
+    delete customer.payment;
 
     try {
-      const order = await publicApi.createOrder({
-        customer: Object.fromEntries(formData.entries()),
+      const data = await publicApi.createOrder({
+        customer,
         items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+        paymentMethod,
       });
-      setOrderPlaced(order);
-      clearCart();
+
+      if (paymentMethod !== 'razorpay') {
+        setOrderPlaced(data.order);
+        clearCart();
+        return;
+      }
+
+      await loadRazorpayScript();
+
+      const razorpayKeyId = data.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKeyId) throw new Error('Razorpay key is not configured');
+
+      const order = data.order;
+      const razorpayOrder = data.razorpayOrder;
+
+      await new Promise((resolve, reject) => {
+        const razorpay = new window.Razorpay({
+          key: razorpayKeyId,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: 'DivineDhenu',
+          description: `Order ${order.orderNumber}`,
+          order_id: razorpayOrder.id,
+          prefill: {
+            name: order.customer.name,
+            email: order.customer.email,
+            contact: order.customer.phone,
+          },
+          notes: {
+            orderNumber: order.orderNumber,
+          },
+          handler: async (response) => {
+            try {
+              const verifiedOrder = await publicApi.verifyPayment({
+                orderId: order._id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              setOrderPlaced(verifiedOrder);
+              clearCart();
+              resolve();
+            } catch (verifyError) {
+              reject(verifyError);
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment was cancelled. Your order is still pending.')),
+          },
+        });
+
+        razorpay.on('payment.failed', (response) => {
+          reject(new Error(response.error?.description || 'Payment failed. Please try again.'));
+        });
+
+        razorpay.open();
+      });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Could not place your order. Please try again.');
+      setError(requestError.response?.data?.message || requestError.message || 'Could not place your order. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -77,10 +158,8 @@ export default function Checkout() {
 
             <h2 className="mt-8 font-serif text-2xl">Payment</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <PaymentOption value="cod" label="Cash on Delivery" defaultChecked />
-              <div className="rounded-md border border-dashed border-ritual-border bg-white/50 px-4 py-4 text-sm text-ritual-muted">
-                Online Payment <span className="ml-1 text-xs">(coming soon)</span>
-              </div>
+              <PaymentOption value="razorpay" label="Online Payment" defaultChecked />
+              <PaymentOption value="cod" label="Cash on Delivery" />
             </div>
           </div>
 
@@ -105,7 +184,7 @@ export default function Checkout() {
               </div>
             </div>
             {error ? <p className="mt-5 rounded-md bg-red-50 px-3 py-3 text-sm text-red-700">{error}</p> : null}
-            <PrimaryButton type="submit" disabled={submitting} className="mt-6 w-full">{submitting ? 'Placing Order...' : 'Place Order'}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={submitting} className="mt-6 w-full">{submitting ? 'Processing...' : 'Place Order'}</PrimaryButton>
             <Link to="/cart" className="mt-4 block text-center text-sm font-semibold text-ritual-muted hover:text-ritual-gold">Back to Cart</Link>
           </aside>
         </form>

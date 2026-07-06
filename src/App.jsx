@@ -13,6 +13,7 @@ import Dashboard from './admin/pages/Dashboard.jsx';
 import Login from './admin/pages/Login.jsx';
 import Offers from './admin/pages/Offers.jsx';
 import OfferForm from './admin/pages/OfferForm.jsx';
+import Orders from './admin/pages/Orders.jsx';
 import ProductForm from './admin/pages/ProductForm.jsx';
 import Products from './admin/pages/Products.jsx';
 import Reviews from './admin/pages/Reviews.jsx';
@@ -89,6 +90,7 @@ export default function App() {
               <Route path="products" element={<Products />} />
               <Route path="products/new" element={<ProductForm />} />
               <Route path="products/edit/:id" element={<ProductForm />} />
+              <Route path="orders" element={<Orders />} />
               <Route path="blogs" element={<Blogs />} />
               <Route path="blogs/new" element={<BlogForm />} />
               <Route path="blogs/edit/:id" element={<BlogForm />} />

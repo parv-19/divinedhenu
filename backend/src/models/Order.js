@@ -32,6 +32,32 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    sku: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    discount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    tax: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    hsn: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    dimensions: {
+      length: { type: Number, min: 0, default: 10 },
+      breadth: { type: Number, min: 0, default: 10 },
+      height: { type: Number, min: 0, default: 5 },
+      weight: { type: Number, min: 0, default: 0.5 },
+    },
   },
   { _id: false }
 );
@@ -80,14 +106,99 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['cod'],
+      enum: ['cod', 'razorpay'],
       default: 'cod',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'refunded'],
+      default: 'pending',
+      index: true,
+    },
+    orderStatus: {
+      type: String,
+      enum: [
+        'pending',
+        'payment_initiated',
+        'confirmed',
+        'shipping_pending',
+        'shiprocket_order_created',
+        'shipped',
+        'delivered',
+        'cancelled',
+        'refunded',
+      ],
+      default: 'pending',
+      index: true,
     },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
       default: 'pending',
       index: true,
+    },
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+      index: true,
+      default: '',
+    },
+    razorpayPaymentId: {
+      type: String,
+      trim: true,
+      index: true,
+      default: '',
+    },
+    razorpaySignature: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    shiprocketOrderId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    shiprocketShipmentId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    shiprocketStatus: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    awbCode: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    courierCompanyId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    courierName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    trackingUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    shiprocketError: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    package: {
+      length: { type: Number, min: 0.1, default: 10 },
+      breadth: { type: Number, min: 0.1, default: 10 },
+      height: { type: Number, min: 0.1, default: 5 },
+      weight: { type: Number, min: 0.01, default: 0.5 },
     },
   },
   { timestamps: true }
