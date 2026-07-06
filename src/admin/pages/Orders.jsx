@@ -86,7 +86,7 @@ export default function Orders() {
       </div>
       {error ? <p className="rounded-md bg-ritual-rose/20 px-3 py-2 text-sm">{error}</p> : null}
       <DataTable columns={columns} rows={orders} />
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <button disabled={pagination.page <= 1} onClick={() => updateFilter('page', filters.page - 1)} className="focus-ring rounded-md border border-ritual-border px-3 py-2 text-sm disabled:opacity-50">Previous</button>
         <span className="text-sm text-ritual-muted">Page {pagination.page} of {pagination.pages}</span>
         <button disabled={pagination.page >= pagination.pages} onClick={() => updateFilter('page', filters.page + 1)} className="focus-ring rounded-md border border-ritual-border px-3 py-2 text-sm disabled:opacity-50">Next</button>

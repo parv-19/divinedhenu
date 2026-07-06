@@ -133,6 +133,9 @@ export default function Checkout() {
           notes: {
             orderNumber: order.orderNumber,
           },
+          theme: {
+            color: '#3f2818',
+          },
           handler: async (response) => {
             try {
               const verifiedOrder = await publicApi.verifyPayment({
@@ -187,14 +190,14 @@ export default function Checkout() {
   }
 
   return (
-    <section className="py-10 md:py-16">
+    <section className="py-8 md:py-16">
       <Container>
-        <h1 className="font-serif text-4xl">Checkout</h1>
+        <h1 className="font-serif text-3xl md:text-4xl">Checkout</h1>
         <p className="mt-2 text-sm text-ritual-muted">Complete your details to place the order.</p>
 
-        <form className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]" onSubmit={placeOrder}>
-          <div className="rounded-lg border border-ritual-border bg-ritual-card p-5 shadow-soft md:p-7">
-            <h2 className="font-serif text-2xl">Delivery Details</h2>
+        <form className="mt-6 grid gap-6 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8" onSubmit={placeOrder}>
+          <div className="min-w-0 rounded-lg border border-ritual-border bg-ritual-card p-4 shadow-soft md:p-7">
+            <h2 className="font-serif text-xl md:text-2xl">Delivery Details</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <Field label="Full name" name="name" autoComplete="name" />
               <Field label="Mobile number" name="phone" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, '').slice(0, 10))} />
@@ -205,20 +208,20 @@ export default function Checkout() {
               <Field label="State" name="state" autoComplete="address-level1" />
             </div>
 
-            <h2 className="mt-8 font-serif text-2xl">Payment</h2>
+            <h2 className="mt-8 font-serif text-xl md:text-2xl">Payment</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <PaymentOption value="razorpay" label="Online Payment" checked={paymentMethod === 'razorpay'} onChange={(event) => setPaymentMethod(event.target.value)} />
               <PaymentOption value="cod" label="Cash on Delivery" checked={paymentMethod === 'cod'} onChange={(event) => setPaymentMethod(event.target.value)} />
             </div>
           </div>
 
-          <aside className="h-fit rounded-lg border border-ritual-border bg-ritual-card p-5 shadow-soft md:p-6">
-            <h2 className="font-serif text-2xl">Order Summary</h2>
+          <aside className="min-w-0 rounded-lg border border-ritual-border bg-ritual-card p-4 shadow-soft md:p-6 lg:sticky lg:top-6 lg:h-fit">
+            <h2 className="font-serif text-xl md:text-2xl">Order Summary</h2>
             <div className="mt-5 grid gap-4">
               {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-[64px_1fr] gap-3">
+                <div key={item.id} className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] gap-3 sm:grid-cols-[64px_minmax(0,1fr)]">
                   <ProductImage image={item.image} className="aspect-square rounded-md" />
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold leading-5">{item.name}</p>
                     <p className="mt-1 text-xs text-ritual-muted">Qty: {item.quantity} | Rs. {Number(item.price * item.quantity).toFixed(2)}</p>
                   </div>
@@ -230,21 +233,21 @@ export default function Checkout() {
                 <span className="text-sm font-medium">Coupon code</span>
                 <input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase().replace(/\s/g, ''))} placeholder="DIVINE20" className={inputClass} />
               </label>
-              <div className="flex justify-between"><span>Subtotal</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
+              <div className="flex justify-between gap-3"><span>Subtotal</span><span className="shrink-0">Rs. {Number(cartTotal).toFixed(2)}</span></div>
               {discount ? (
-                <div className="flex justify-between text-green-700">
+                <div className="flex justify-between gap-3 text-green-700">
                   <span>Coupon {shippingQuote?.couponCode ? `(${shippingQuote.couponCode})` : ''}</span>
-                  <span>- Rs. {Number(discount).toFixed(2)}</span>
+                  <span className="shrink-0">- Rs. {Number(discount).toFixed(2)}</span>
                 </div>
               ) : null}
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
                 <span>Shipping</span>
-                <span>{shippingLabel(shippingQuote, shippingLoading, postalCode)}</span>
+                <span className="shrink-0 text-right">{shippingLabel(shippingQuote, shippingLoading, postalCode)}</span>
               </div>
               {shippingQuote?.courierName ? <p className="text-xs text-ritual-muted">{shippingQuote.courierName}{shippingQuote.estimatedDeliveryDays ? ` | ${shippingQuote.estimatedDeliveryDays}` : ''}</p> : null}
               {shippingError ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{shippingError}</p> : null}
-              <div className="flex justify-between border-t border-ritual-border pt-3 text-lg font-semibold">
-                <span>Total</span><span>Rs. {Number(cartTotal - discount + shipping).toFixed(2)}</span>
+              <div className="flex justify-between gap-3 border-t border-ritual-border pt-3 text-base font-semibold sm:text-lg">
+                <span>Total</span><span className="shrink-0">Rs. {Number(cartTotal - discount + shipping).toFixed(2)}</span>
               </div>
             </div>
             {error ? <p className="mt-5 rounded-md bg-red-50 px-3 py-3 text-sm text-red-700">{error}</p> : null}
@@ -275,7 +278,7 @@ function shippingLabel(quote, loading, postalCode) {
 
 function PaymentOption({ value, label, ...props }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-md border border-ritual-border bg-white px-4 py-4 text-sm font-semibold">
+    <label className="flex min-h-[52px] cursor-pointer items-center gap-3 rounded-md border border-ritual-border bg-white px-4 py-3 text-sm font-semibold sm:py-4">
       <input required type="radio" name="payment" value={value} {...props} />
       {label}
     </label>
