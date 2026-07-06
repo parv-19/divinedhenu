@@ -52,12 +52,12 @@ export default function Cart() {
             <h2 className="font-serif text-2xl">Order Summary</h2>
             <div className="mt-6 space-y-4 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
-              <div className="flex justify-between gap-3"><span>Shipping</span><span className="text-right">Calculated at checkout</span></div>
+              <div className="flex justify-between gap-3"><span>Shipping</span><span className="text-right">{cartTotal >= 999 ? 'Free on prepaid checkout' : 'Calculated at checkout'}</span></div>
               <div className="border-t border-ritual-border pt-4 text-lg font-semibold">
                 <div className="flex justify-between gap-3"><span>Total before shipping</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
               </div>
             </div>
-            <p className="mt-5 rounded-lg bg-ritual-background p-3 text-sm text-ritual-muted">Live courier rates are calculated from your delivery PIN code at checkout.</p>
+            <p className="mt-5 rounded-lg bg-ritual-background p-3 text-sm text-ritual-muted">Prepaid orders above Rs. 999 get free shipping after PIN code serviceability is confirmed.</p>
             <PrimaryButton to="/checkout" className="mt-6 w-full">Checkout</PrimaryButton>
             <SecondaryButton to="/shop" className="mt-3 w-full">Continue Shopping</SecondaryButton>
           </aside>

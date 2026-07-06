@@ -24,6 +24,10 @@ const normalizePaymentMethod = (value) => (value === 'razorpay' ? 'razorpay' : '
 
 const normalizeCouponCode = (value) => String(value || '').trim().toUpperCase();
 
+const isFreeShippingEligible = ({ subtotal, paymentMethod }) => (
+  paymentMethod === 'razorpay' && subtotal >= 999
+);
+
 const validateCustomer = (customer = {}) => {
   const requiredFields = ['name', 'phone', 'email', 'address', 'city', 'state', 'postalCode'];
   requiredFields.forEach((field) => {
@@ -148,7 +152,8 @@ const buildOrderPricing = async (body) => {
     cod: paymentMethod === 'cod',
     declaredValue: subtotal - discount,
   });
-  const shipping = shippingRate.rate;
+  const freeShipping = isFreeShippingEligible({ subtotal, paymentMethod });
+  const shipping = freeShipping ? 0 : shippingRate.rate;
 
   return {
     items,
@@ -159,6 +164,7 @@ const buildOrderPricing = async (body) => {
     paymentMethod,
     package: orderPackage,
     shippingRate,
+    freeShipping,
     coupon,
   };
 };
@@ -184,6 +190,7 @@ export const quoteCheckout = async (body) => {
     total: pricing.total,
     couponCode: pricing.coupon?.couponCode || '',
     couponDiscountPercent: pricing.coupon?.discountPercent || 0,
+    freeShipping: pricing.freeShipping,
     courierCompanyId: pricing.shippingRate.courierCompanyId,
     courierName: pricing.shippingRate.courierName,
     estimatedDeliveryDays: pricing.shippingRate.estimatedDeliveryDays,

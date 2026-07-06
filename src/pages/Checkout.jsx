@@ -244,6 +244,7 @@ export default function Checkout() {
                 <span>Shipping</span>
                 <span className="shrink-0 text-right">{shippingLabel(shippingQuote, shippingLoading, postalCode)}</span>
               </div>
+              {shippingQuote?.freeShipping ? <p className="text-xs font-medium text-green-700">Free prepaid shipping applied above Rs. 999.</p> : null}
               {shippingQuote?.courierName ? <p className="text-xs text-ritual-muted">{shippingQuote.courierName}{shippingQuote.estimatedDeliveryDays ? ` | ${shippingQuote.estimatedDeliveryDays}` : ''}</p> : null}
               {shippingError ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{shippingError}</p> : null}
               <div className="flex justify-between gap-3 border-t border-ritual-border pt-3 text-base font-semibold sm:text-lg">
@@ -273,6 +274,7 @@ function shippingLabel(quote, loading, postalCode) {
   if (loading) return 'Calculating...';
   if (!postalCode || postalCode.length < 6) return 'Enter PIN code';
   if (!quote) return 'Unavailable';
+  if (quote.freeShipping) return 'Free';
   return `Rs. ${Number(quote.shipping || 0).toFixed(2)}`;
 }
 
