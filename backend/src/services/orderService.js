@@ -197,12 +197,13 @@ export const quoteCheckout = async (body) => {
   };
 };
 
-export const createOrder = async (body) => {
+export const createOrder = async (body, customerAccount = null) => {
   validateCustomer(body.customer);
   const pricing = await buildOrderPricing(body);
 
   const order = await Order.create({
     orderNumber: createOrderNumber(),
+    customerAccount: customerAccount?._id || null,
     customer: body.customer,
     items: pricing.items,
     subtotal: pricing.subtotal,

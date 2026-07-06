@@ -11,6 +11,8 @@ import Blogs from './admin/pages/Blogs.jsx';
 import Combos from './admin/pages/Combos.jsx';
 import Dashboard from './admin/pages/Dashboard.jsx';
 import Login from './admin/pages/Login.jsx';
+import CustomerLogin from './pages/Login.jsx';
+import Register from './pages/Register.jsx';
 import Offers from './admin/pages/Offers.jsx';
 import OfferForm from './admin/pages/OfferForm.jsx';
 import Orders from './admin/pages/Orders.jsx';
@@ -60,7 +62,8 @@ export default function App() {
       {!isAdminRoute ? <Navbar /> : null}
       <main className={!isAdminRoute ? 'pb-16 lg:pb-0' : ''}>
         <Routes>
-          <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/login" element={<CustomerLogin />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/admin/login" element={<Login />} />
           <Route element={<ProtectedAdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>

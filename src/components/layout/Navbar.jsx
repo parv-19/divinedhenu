@@ -1,7 +1,8 @@
-import { Menu, ShoppingBag, X } from 'lucide-react';
+import { LogOut, Menu, ShoppingBag, User, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { publicApi } from '../../services/api.js';
 import { transparentLogoUrl } from '../../utils/imageUrl.js';
 import Container from '../common/Container.jsx';
@@ -24,6 +25,7 @@ export default function Navbar() {
     wordmark: '/divinedhenu-wordmark.png',
   });
   const { itemCount } = useCart();
+  const { customer, isAuthenticated, logout } = useAuth();
   const linkClass = ({ isActive }) =>
     `text-sm font-medium transition hover:text-ritual-gold ${isActive ? 'text-ritual-gold' : 'text-ritual-text'}`;
 
@@ -64,6 +66,20 @@ export default function Navbar() {
                 </span>
               ) : null}
             </Link>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={logout}
+                className="focus-ring hidden h-11 items-center gap-2 rounded-full border border-ritual-border bg-ritual-card px-3 text-sm font-semibold text-ritual-text transition hover:border-ritual-gold md:inline-flex"
+                title={`Logout ${customer?.name || ''}`}
+              >
+                <LogOut size={16} /> Logout
+              </button>
+            ) : (
+              <Link to="/login" className="focus-ring hidden h-11 items-center gap-2 rounded-full border border-ritual-border bg-ritual-card px-3 text-sm font-semibold text-ritual-text transition hover:border-ritual-gold md:inline-flex">
+                <User size={16} /> Login
+              </Link>
+            )}
             <button
               className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-ritual-border bg-ritual-card text-ritual-text lg:hidden"
               onClick={() => setOpen((value) => !value)}
@@ -82,6 +98,15 @@ export default function Navbar() {
                 {label}
               </NavLink>
             ))}
+            {isAuthenticated ? (
+              <button type="button" onClick={() => { logout(); setOpen(false); }} className="rounded-lg px-3 py-3 text-left text-sm font-medium text-ritual-text hover:bg-ritual-background">
+                Logout {customer?.name ? `(${customer.name})` : ''}
+              </button>
+            ) : (
+              <NavLink to="/login" className="rounded-lg px-3 py-3 text-sm font-medium text-ritual-text hover:bg-ritual-background" onClick={() => setOpen(false)}>
+                Login
+              </NavLink>
+            )}
           </div>
         </Container>
       </div>

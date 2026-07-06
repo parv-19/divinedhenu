@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
+  const { customer } = useAuth();
+  const cartKey = customer?._id ? `divinedhenu-cart:${customer._id}` : 'divinedhenu-cart:guest';
   const [items, setItems] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('divinedhenu-cart')) || [];
+      return JSON.parse(localStorage.getItem('divinedhenu-cart:guest')) || [];
     } catch {
       return [];
     }
@@ -13,8 +16,27 @@ export function CartProvider({ children }) {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('divinedhenu-cart', JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem(cartKey, JSON.stringify(items));
+  }, [cartKey, items]);
+
+  useEffect(() => {
+    try {
+      const nextItems = JSON.parse(localStorage.getItem(cartKey)) || [];
+      const guestItems = JSON.parse(localStorage.getItem('divinedhenu-cart:guest')) || [];
+
+      if (customer?._id && guestItems.length) {
+        const merged = mergeCartItems(nextItems, guestItems);
+        localStorage.setItem(cartKey, JSON.stringify(merged));
+        localStorage.removeItem('divinedhenu-cart:guest');
+        setItems(merged);
+        return;
+      }
+
+      setItems(nextItems);
+    } catch {
+      setItems([]);
+    }
+  }, [cartKey, customer?._id]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -90,4 +112,14 @@ export function useCart() {
     throw new Error('useCart must be used inside CartProvider');
   }
   return context;
+}
+
+function mergeCartItems(target, source) {
+  return source.reduce((result, item) => {
+    const existing = result.find((current) => current.id === item.id);
+    if (!existing) return [...result, item];
+    return result.map((current) => (
+      current.id === item.id ? { ...current, quantity: current.quantity + item.quantity } : current
+    ));
+  }, target);
 }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { PrimaryButton } from '../components/common/Button.jsx';
 import Container from '../components/common/Container.jsx';
 import ProductImage from '../components/products/ProductImage.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { publicApi } from '../services/api.js';
 
@@ -31,6 +32,7 @@ const loadRazorpayScript = () => new Promise((resolve, reject) => {
 });
 
 export default function Checkout() {
+  const { customer, isAuthenticated } = useAuth();
   const { items, cartTotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -45,6 +47,12 @@ export default function Checkout() {
   const [shippingError, setShippingError] = useState('');
   const shipping = shippingQuote?.shipping || 0;
   const discount = shippingQuote?.discount || 0;
+
+  useEffect(() => {
+    if (!customer) return;
+    setEmail((value) => value || customer.email || '');
+    setPhone((value) => value || customer.phone || '');
+  }, [customer]);
 
   useEffect(() => {
     const cleanPostalCode = postalCode.trim();
@@ -177,6 +185,10 @@ export default function Checkout() {
         <PrimaryButton to="/shop" className="mt-8">Continue Shopping</PrimaryButton>
       </Container>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login?next=/checkout" replace />;
   }
 
   if (!items.length) {

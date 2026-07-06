@@ -6,6 +6,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
+api.interceptors.request.use((config) => {
+  const auth = JSON.parse(localStorage.getItem('divinedhenu-customer-auth') || '{}');
+  if (auth.token) config.headers.Authorization = `Bearer ${auth.token}`;
+  return config;
+});
+
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const normalizeAssetUrl = (value) => {
@@ -112,6 +118,18 @@ export const publicApi = {
   },
   async createOrder(payload) {
     const { data } = await api.post('/orders', payload);
+    return data;
+  },
+  async registerCustomer(payload) {
+    const { data } = await api.post('/customer-auth/register', payload);
+    return data;
+  },
+  async loginCustomer(payload) {
+    const { data } = await api.post('/customer-auth/login', payload);
+    return data;
+  },
+  async loginWithGoogle(credential) {
+    const { data } = await api.post('/customer-auth/google', { credential });
     return data;
   },
   async quoteShipping(payload) {

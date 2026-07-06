@@ -70,6 +70,12 @@ const orderSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    customerAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer',
+      default: null,
+      index: true,
+    },
     customer: {
       name: { type: String, required: true, trim: true },
       phone: { type: String, required: true, trim: true },
