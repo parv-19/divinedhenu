@@ -100,6 +100,10 @@ export const publicApi = {
     const { data } = await api.post('/orders', payload);
     return data;
   },
+  async quoteShipping(payload) {
+    const { data } = await api.post('/shipping/quote', payload);
+    return data.quote;
+  },
   async verifyPayment(payload) {
     const { data } = await api.post('/payments/verify', payload);
     return data.order;

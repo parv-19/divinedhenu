@@ -22,6 +22,15 @@ const requireConfig = () => {
   }
 };
 
+const getPickupPostcode = () => {
+  const pickupPostcode = String(process.env.SHIPROCKET_PICKUP_PINCODE || '').trim();
+  if (!/^\d{6}$/.test(pickupPostcode)) {
+    throw createError('SHIPROCKET_PICKUP_PINCODE must be configured for live shipping rates', 500);
+  }
+
+  return pickupPostcode;
+};
+
 const parseShiprocketResponse = async (response) => {
   const text = await response.text();
   try {
@@ -144,6 +153,72 @@ const postShiprocketOrder = async (order, token) => {
   });
   const data = await parseShiprocketResponse(response);
   return { response, data };
+};
+
+export const getShiprocketShippingRate = async ({ deliveryPostcode, weight, cod = false, declaredValue = 0 }) => {
+  if (!/^\d{6}$/.test(String(deliveryPostcode || '').trim())) {
+    throw createError('Enter a valid 6 digit delivery PIN code');
+  }
+
+  const params = new URLSearchParams({
+    pickup_postcode: getPickupPostcode(),
+    delivery_postcode: String(deliveryPostcode).trim(),
+    cod: cod ? '1' : '0',
+    weight: String(normalizeNumber(weight, DEFAULT_PACKAGE.weight)),
+  });
+
+  if (declaredValue) params.set('declared_value', String(Math.round(Number(declaredValue))));
+
+  const fetchRate = async (token) => {
+    const response = await fetch(`${SHIPROCKET_API_BASE}/courier/serviceability/?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await parseShiprocketResponse(response);
+    return { response, data };
+  };
+
+  let token = await getShiprocketToken();
+  let { response, data } = await fetchRate(token);
+
+  if (response.status === 401) {
+    token = await getShiprocketToken({ forceRefresh: true });
+    ({ response, data } = await fetchRate(token));
+  }
+
+  if (!response.ok) {
+    console.error('Shiprocket rate lookup failed', data);
+    throw createError(data.message || 'Could not calculate live shipping rate', response.status);
+  }
+
+  const couriers = data.data?.available_courier_companies || [];
+  if (!couriers.length) {
+    throw createError('Shipping is not available for this PIN code');
+  }
+
+  const pricedCouriers = couriers
+    .map((courier) => {
+      const freight = Number(courier.freight_charge ?? courier.rate ?? courier.shipping_amount ?? 0);
+      const codCharges = Number(courier.cod_charges || 0);
+      return {
+        courierCompanyId: courier.courier_company_id ? String(courier.courier_company_id) : '',
+        courierName: courier.courier_name || '',
+        freightCharge: freight,
+        codCharges,
+        rate: Number((freight + codCharges).toFixed(2)),
+        estimatedDeliveryDays: courier.estimated_delivery_days || courier.etd || '',
+      };
+    })
+    .filter((courier) => courier.rate > 0)
+    .sort((first, second) => first.rate - second.rate);
+
+  if (!pricedCouriers.length) {
+    throw createError('Shiprocket did not return a usable shipping rate for this PIN code');
+  }
+
+  return pricedCouriers[0];
 };
 
 export const createShiprocketOrder = async (order) => {

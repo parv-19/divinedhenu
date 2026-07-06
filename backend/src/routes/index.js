@@ -17,6 +17,7 @@ import publicProductRoutes from './publicProductRoutes.js';
 import publicReviewRoutes from './publicReviewRoutes.js';
 import publicSiteSettingRoutes from './publicSiteSettingRoutes.js';
 import reviewRoutes from './reviewRoutes.js';
+import shippingRoutes from './shippingRoutes.js';
 import siteSettingRoutes from './siteSettingRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 
@@ -47,6 +48,7 @@ router.use('/banners', publicBannerRoutes);
 router.use('/offers', publicOfferRoutes);
 router.use('/orders', publicOrderRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/shipping', shippingRoutes);
 router.use('/reviews', publicReviewRoutes);
 router.use('/site-settings', publicSiteSettingRoutes);
 

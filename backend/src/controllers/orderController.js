@@ -9,6 +9,15 @@ export const createOrder = async (req, res, next) => {
   }
 };
 
+export const quoteShipping = async (req, res, next) => {
+  try {
+    const quote = await orderService.quoteShipping(req.body);
+    res.status(200).json({ success: true, quote });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const verifyPayment = async (req, res, next) => {
   try {
     const order = await orderService.verifyPayment(req.body);

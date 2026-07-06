@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { createRazorpayOrder, getPublicRazorpayKey, verifyPaymentSignature } from './razorpayService.js';
-import { createShiprocketOrder, extractShipmentFields, getOrderPackage } from './shiprocketService.js';
+import { createShiprocketOrder, extractShipmentFields, getOrderPackage, getShiprocketShippingRate } from './shiprocketService.js';
 
 const createError = (message, statusCode = 400) => {
   const error = new Error(message);
@@ -63,10 +63,9 @@ const mapOrderItems = (productIds, quantityByProduct, productMap) => productIds.
   };
 });
 
-export const createOrder = async (body) => {
+const buildOrderPricing = async (body) => {
   const requestedItems = Array.isArray(body.items) ? body.items : [];
   if (!requestedItems.length) throw createError('Order must include at least one product');
-  validateCustomer(body.customer);
 
   const quantityByProduct = new Map();
   requestedItems.forEach((item) => {
@@ -84,24 +83,68 @@ export const createOrder = async (body) => {
 
   const items = mapOrderItems(productIds, quantityByProduct, productMap);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal >= 999 ? 0 : 79;
   const paymentMethod = normalizePaymentMethod(body.paymentMethod || body.payment);
+  const orderPackage = getOrderPackage({ items });
+  const shippingRate = await getShiprocketShippingRate({
+    deliveryPostcode: body.customer?.postalCode || body.postalCode,
+    weight: orderPackage.weight,
+    cod: paymentMethod === 'cod',
+    declaredValue: subtotal,
+  });
+  const shipping = shippingRate.rate;
 
-  const order = await Order.create({
-    orderNumber: createOrderNumber(),
-    customer: body.customer,
+  return {
     items,
     subtotal,
     shipping,
     total: subtotal + shipping,
     paymentMethod,
-    paymentStatus: 'pending',
-    orderStatus: paymentMethod === 'razorpay' ? 'payment_initiated' : 'pending',
-    status: 'pending',
-    package: getOrderPackage({ items }),
+    package: orderPackage,
+    shippingRate,
+  };
+};
+
+export const quoteShipping = async (body) => {
+  if (!/^\d{6}$/.test(String(body.postalCode || '').trim())) {
+    throw createError('Enter a valid 6 digit PIN code');
+  }
+
+  const pricing = await buildOrderPricing({
+    ...body,
+    customer: { postalCode: body.postalCode },
   });
 
-  if (paymentMethod !== 'razorpay') {
+  return {
+    subtotal: pricing.subtotal,
+    shipping: pricing.shipping,
+    total: pricing.total,
+    courierCompanyId: pricing.shippingRate.courierCompanyId,
+    courierName: pricing.shippingRate.courierName,
+    estimatedDeliveryDays: pricing.shippingRate.estimatedDeliveryDays,
+  };
+};
+
+export const createOrder = async (body) => {
+  validateCustomer(body.customer);
+  const pricing = await buildOrderPricing(body);
+
+  const order = await Order.create({
+    orderNumber: createOrderNumber(),
+    customer: body.customer,
+    items: pricing.items,
+    subtotal: pricing.subtotal,
+    shipping: pricing.shipping,
+    total: pricing.total,
+    paymentMethod: pricing.paymentMethod,
+    paymentStatus: 'pending',
+    orderStatus: pricing.paymentMethod === 'razorpay' ? 'payment_initiated' : 'pending',
+    status: 'pending',
+    package: pricing.package,
+    courierCompanyId: pricing.shippingRate.courierCompanyId,
+    courierName: pricing.shippingRate.courierName,
+  });
+
+  if (pricing.paymentMethod !== 'razorpay') {
     return { order };
   }
 
@@ -127,7 +170,10 @@ export const createOrder = async (body) => {
 export const saveShiprocketResult = async (order, shiprocketResponse) => {
   if (!shiprocketResponse) return order;
 
-  Object.assign(order, extractShipmentFields(shiprocketResponse));
+  Object.entries(extractShipmentFields(shiprocketResponse)).forEach(([key, value]) => {
+    if (value !== '') order[key] = value;
+  });
+  order.shiprocketError = '';
   order.orderStatus = 'shiprocket_order_created';
   order.status = 'confirmed';
   await order.save();

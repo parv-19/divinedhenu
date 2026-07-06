@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PrimaryButton } from '../components/common/Button.jsx';
 import Container from '../components/common/Container.jsx';
@@ -35,7 +35,43 @@ export default function Checkout() {
   const [orderPlaced, setOrderPlaced] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const shipping = cartTotal >= 999 ? 0 : 79;
+  const [postalCode, setPostalCode] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [shippingQuote, setShippingQuote] = useState(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState('');
+  const shipping = shippingQuote?.shipping || 0;
+
+  useEffect(() => {
+    const cleanPostalCode = postalCode.trim();
+    setShippingQuote(null);
+    setShippingError('');
+
+    if (!items.length || cleanPostalCode.length < 6) return undefined;
+    if (!/^\d{6}$/.test(cleanPostalCode)) {
+      setShippingError('Enter a valid 6 digit PIN code.');
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShippingLoading(true);
+      publicApi.quoteShipping({
+        postalCode: cleanPostalCode,
+        paymentMethod,
+        items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      })
+        .then((quote) => {
+          setShippingQuote(quote);
+          setShippingError('');
+        })
+        .catch((requestError) => {
+          setShippingError(requestError.response?.data?.message || 'Could not calculate live shipping for this PIN code.');
+        })
+        .finally(() => setShippingLoading(false));
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [items, paymentMethod, postalCode]);
 
   const placeOrder = async (event) => {
     event.preventDefault();
@@ -43,9 +79,14 @@ export default function Checkout() {
     setError('');
 
     const formData = new FormData(event.currentTarget);
-    const paymentMethod = formData.get('payment');
     const customer = Object.fromEntries(formData.entries());
     delete customer.payment;
+
+    if (!shippingQuote) {
+      setSubmitting(false);
+      setError(shippingError || 'Enter a valid PIN code to calculate live shipping before placing the order.');
+      return;
+    }
 
     try {
       const data = await publicApi.createOrder({
@@ -150,7 +191,7 @@ export default function Checkout() {
               <Field label="Full name" name="name" autoComplete="name" />
               <Field label="Mobile number" name="phone" type="tel" autoComplete="tel" />
               <Field label="Email" name="email" type="email" autoComplete="email" />
-              <Field label="PIN code" name="postalCode" inputMode="numeric" autoComplete="postal-code" />
+              <Field label="PIN code" name="postalCode" inputMode="numeric" autoComplete="postal-code" maxLength={6} value={postalCode} onChange={(event) => setPostalCode(event.target.value.replace(/\D/g, '').slice(0, 6))} />
               <Field label="Address" name="address" autoComplete="street-address" className="sm:col-span-2" />
               <Field label="City" name="city" autoComplete="address-level2" />
               <Field label="State" name="state" autoComplete="address-level1" />
@@ -158,8 +199,8 @@ export default function Checkout() {
 
             <h2 className="mt-8 font-serif text-2xl">Payment</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <PaymentOption value="razorpay" label="Online Payment" defaultChecked />
-              <PaymentOption value="cod" label="Cash on Delivery" />
+              <PaymentOption value="razorpay" label="Online Payment" checked={paymentMethod === 'razorpay'} onChange={(event) => setPaymentMethod(event.target.value)} />
+              <PaymentOption value="cod" label="Cash on Delivery" checked={paymentMethod === 'cod'} onChange={(event) => setPaymentMethod(event.target.value)} />
             </div>
           </div>
 
@@ -178,13 +219,18 @@ export default function Checkout() {
             </div>
             <div className="mt-6 space-y-3 border-t border-ritual-border pt-4 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Shipping</span><span>{shipping ? `Rs. ${shipping}` : 'Free'}</span></div>
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>{shippingLabel(shippingQuote, shippingLoading, postalCode)}</span>
+              </div>
+              {shippingQuote?.courierName ? <p className="text-xs text-ritual-muted">{shippingQuote.courierName}{shippingQuote.estimatedDeliveryDays ? ` | ${shippingQuote.estimatedDeliveryDays}` : ''}</p> : null}
+              {shippingError ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{shippingError}</p> : null}
               <div className="flex justify-between border-t border-ritual-border pt-3 text-lg font-semibold">
                 <span>Total</span><span>Rs. {Number(cartTotal + shipping).toFixed(2)}</span>
               </div>
             </div>
             {error ? <p className="mt-5 rounded-md bg-red-50 px-3 py-3 text-sm text-red-700">{error}</p> : null}
-            <PrimaryButton type="submit" disabled={submitting} className="mt-6 w-full">{submitting ? 'Processing...' : 'Place Order'}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={submitting || shippingLoading || !shippingQuote} className="mt-6 w-full">{submitting ? 'Processing...' : 'Place Order'}</PrimaryButton>
             <Link to="/cart" className="mt-4 block text-center text-sm font-semibold text-ritual-muted hover:text-ritual-gold">Back to Cart</Link>
           </aside>
         </form>
@@ -200,6 +246,13 @@ function Field({ label, className = '', ...props }) {
       <input required className={inputClass} {...props} />
     </label>
   );
+}
+
+function shippingLabel(quote, loading, postalCode) {
+  if (loading) return 'Calculating...';
+  if (!postalCode || postalCode.length < 6) return 'Enter PIN code';
+  if (!quote) return 'Unavailable';
+  return `Rs. ${Number(quote.shipping || 0).toFixed(2)}`;
 }
 
 function PaymentOption({ value, label, ...props }) {
