@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import Container from '../components/common/Container.jsx';
+import ProductImage from '../components/products/ProductImage.jsx';
 import { cowpediaTopics } from '../data/cowpediaTopics.js';
 import { publicApi } from '../services/api.js';
 
@@ -38,7 +39,7 @@ export default function CowPedia() {
             return (
               <Link key={topic.slug} to={`/cowpedia/${topic.slug}`} className="group overflow-hidden rounded-lg border border-[#dcdcdc] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
                 {latestPost?.heroImageUrl || topic.image ? (
-                  <img src={latestPost?.heroImageUrl || topic.image} alt={topic.title} className="aspect-[1.56] w-full object-cover" loading="lazy" />
+                  <ProductImage image={latestPost?.heroImageUrl || topic.image} className="aspect-[1.56] w-full" />
                 ) : (
                   <div className="grid aspect-[1.56] place-items-center bg-[#f4efe7] px-6 text-center text-xl font-bold text-[#4a2f1d]">{topic.title}</div>
                 )}

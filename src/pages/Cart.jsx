@@ -51,13 +51,13 @@ export default function Cart() {
           <aside className="h-fit rounded-lg border border-ritual-border bg-ritual-card p-6 shadow-soft">
             <h2 className="font-serif text-2xl">Order Summary</h2>
             <div className="mt-6 space-y-4 text-sm">
-              <div className="flex justify-between"><span>Subtotal</span><span>₹{cartTotal}</span></div>
-              <div className="flex justify-between"><span>Shipping</span><span>{cartTotal >= 999 ? 'Free' : '₹79'}</span></div>
+              <div className="flex justify-between"><span>Subtotal</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
+              <div className="flex justify-between gap-3"><span>Shipping</span><span className="text-right">Calculated at checkout</span></div>
               <div className="border-t border-ritual-border pt-4 text-lg font-semibold">
-                <div className="flex justify-between"><span>Total</span><span>₹{cartTotal + (cartTotal >= 999 ? 0 : 79)}</span></div>
+                <div className="flex justify-between gap-3"><span>Total before shipping</span><span>Rs. {Number(cartTotal).toFixed(2)}</span></div>
               </div>
             </div>
-            <p className="mt-5 rounded-lg bg-ritual-background p-3 text-sm text-ritual-muted">Free shipping on prepaid orders above ₹999.</p>
+            <p className="mt-5 rounded-lg bg-ritual-background p-3 text-sm text-ritual-muted">Live courier rates are calculated from your delivery PIN code at checkout.</p>
             <PrimaryButton to="/checkout" className="mt-6 w-full">Checkout</PrimaryButton>
             <SecondaryButton to="/shop" className="mt-3 w-full">Continue Shopping</SecondaryButton>
           </aside>

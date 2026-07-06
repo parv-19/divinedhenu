@@ -6,6 +6,15 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+
+const normalizeAssetUrl = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  if (/^https?:\/\//.test(value)) return value;
+  if (value.startsWith('/')) return `${API_ORIGIN}${value}`;
+  return '';
+};
+
 export const getImageValue = (product) => (
   product?.image || product?.images?.[0]?.url || product?.images?.[0] || ''
 );
@@ -28,7 +37,12 @@ export const normalizeProduct = (product) => {
 export const normalizeBlog = (blog) => ({
   ...blog,
   id: blog.id || blog._id,
-  heroImageUrl: blog.heroImage?.url || '',
+  heroImageUrl: normalizeAssetUrl(blog.heroImage?.url),
+  contentBlocks: (blog.contentBlocks || []).map((block) => (
+    block.image?.url
+      ? { ...block, image: { ...block.image, url: normalizeAssetUrl(block.image.url) } }
+      : block
+  )),
   featuredProducts: (blog.featuredProducts || []).filter(Boolean).map(normalizeProduct),
 });
 

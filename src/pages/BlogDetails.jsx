@@ -41,7 +41,7 @@ export default function BlogDetails() {
         <h1 className="mx-auto max-w-[900px] text-center text-4xl font-normal leading-[1.45] tracking-normal md:text-[38px]">
           {blog.title}
         </h1>
-        <img src={blog.heroImageUrl} alt={blog.heroImage?.alt || blog.title} className="mx-auto mt-10 aspect-[1.54] w-full max-w-[870px] object-cover" />
+        <ProductImage image={blog.heroImageUrl} className="mx-auto mt-10 aspect-[1.54] w-full max-w-[870px]" />
       </div>
 
       <div className="mx-auto mt-10 max-w-[870px] px-4 text-[17px] leading-[1.72] text-[#5b6370]">
@@ -77,7 +77,7 @@ function BlogBlock({ block, products, showProducts }) {
 
   if (block.type === 'image') {
     return block.image?.url ? (
-      <img src={block.image.url} alt={block.image.alt || ''} className="mt-8 aspect-[1.54] w-full object-cover" />
+      <ProductImage image={block.image.url} className="mt-8 aspect-[1.54] w-full" />
     ) : null;
   }
 
